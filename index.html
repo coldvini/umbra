@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Umbra for Mac</title>
+<meta name="description" content="Run Windows apps and games on your Mac. Free download.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+  /* Layout: single column on an eclipse-dark field — sticky slim bar, a glowing
+     hero that states the thesis, two download cards, features, footer. */
+  :root {
+    --bg: #07070b;            /* umbra: near-black, faint blue */
+    --bg-2: #0d0d14;          /* raised panel */
+    --card: #111119;          /* card fill */
+    --card-2: #15151f;        /* card hover / inner */
+    --fg: #f3f3f8;
+    --muted: #9b9bb0;         /* cool grey, biased to the accent */
+    --faint: #6a6a7e;
+    --line: rgba(255,255,255,0.09);
+    --line-2: rgba(255,255,255,0.14);
+    --accent: #7d8cff;        /* corona: periwinkle */
+    --accent-2: #b07cff;      /* violet, for the hero glow gradient */
+    --glow: rgba(125,140,255,0.22);
+    --ok: #5ad19b;
+    --warn: #e6b45c;
+    --bad: #ef7b86;
+    --display: "Bricolage Grotesque", "Inter", ui-sans-serif, system-ui, sans-serif;
+    --body: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  img { max-width: 100%; display: block; }
+  a { color: inherit; }
+  [hidden] { display: none !important; }
+
+  /* Ambient eclipse glow behind everything, sized to the hero. */
+  .aura {
+    position: fixed;
+    inset: -20vh 0 auto 0;
+    height: 90vh;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(60% 55% at 50% 22%, var(--glow), transparent 70%),
+      radial-gradient(40% 40% at 78% 8%, rgba(176,124,255,0.14), transparent 70%);
+    filter: saturate(1.1);
+    animation: breathe 9s ease-in-out infinite;
+  }
+  @keyframes breathe { 0%,100% { opacity: .85; } 50% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .aura { animation: none; } }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding-left: max(20px, env(safe-area-inset-left, 0px));
+    padding-right: max(20px, env(safe-area-inset-right, 0px));
+  }
+
+  /* ---------- top bar ---------- */
+  header.bar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    top: env(safe-area-inset-top, 0px);
+    background: rgba(7,7,11,0.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar-in {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-block: 12px;
+  }
+  .brand { display: flex; align-items: center; gap: 11px; text-decoration: none; }
+  .mark {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: radial-gradient(circle at 32% 30%, #30304a, #0a0a12 72%);
+    box-shadow: 0 0 0 1px var(--line-2), 0 0 18px 1px var(--glow);
+    position: relative;
+  }
+  .mark::after {
+    content: ""; position: absolute; inset: 0; border-radius: 50%;
+    box-shadow: inset -3px -2px 7px rgba(125,140,255,0.5);
+  }
+  .brand b {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 19px;
+    letter-spacing: .14em;
+    padding-left: .02em;
+  }
+  .bar-right { display: flex; align-items: center; gap: 10px; }
+  .ver-pill {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 4px 10px;
+    white-space: nowrap;
+  }
+  .gh {
+    display: inline-flex; align-items: center; gap: 8px;
+    text-decoration: none;
+    font-weight: 600; font-size: 14px;
+    color: var(--fg);
+    border: 1px solid var(--line-2);
+    border-radius: 999px;
+    padding: 7px 14px;
+    background: rgba(255,255,255,0.03);
+    transition: border-color .18s ease, background .18s ease, transform .18s ease;
+  }
+  .gh:hover { border-color: var(--accent); background: rgba(125,140,255,0.1); transform: translateY(-1px); }
+  .gh svg { width: 17px; height: 17px; fill: currentColor; }
+  .gh .repo { color: var(--muted); font-weight: 500; }
+  @media (max-width: 560px) { .ver-pill { display: none; } .gh .repo { display: none; } }
+
+  /* ---------- hero ---------- */
+  .hero { text-align: center; padding-block: clamp(52px, 10vw, 96px) clamp(36px, 7vw, 64px); }
+  .eyebrow {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid var(--line-2);
+    border-radius: 999px;
+    padding: 5px 13px;
+    margin-bottom: 22px;
+  }
+  h1 {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(34px, 7.4vw, 62px);
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+    margin: 0 auto;
+    max-width: 14ch;
+    text-wrap: balance;
+  }
+  h1 .soft { color: var(--muted); }
+  .lede {
+    margin: 20px auto 0;
+    max-width: 56ch;
+    color: var(--muted);
+    font-size: clamp(16px, 2.3vw, 18.5px);
+  }
+
+  .cta { margin-top: 34px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .dl-main {
+    display: inline-flex; align-items: center; gap: 13px;
+    text-decoration: none;
+    background: linear-gradient(180deg, #8d9bff, #6a79f5);
+    color: #0a0a14;
+    font-weight: 700; font-size: 17px;
+    padding: 15px 26px;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px -6px var(--glow), inset 0 1px 0 rgba(255,255,255,0.35);
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .dl-main:hover { transform: translateY(-2px); box-shadow: 0 16px 40px -8px var(--glow), inset 0 1px 0 rgba(255,255,255,0.4); }
+  .dl-main svg { width: 20px; height: 20px; fill: currentColor; }
+  .dl-main .sub { font-family: var(--mono); font-weight: 500; font-size: 12.5px; opacity: .72; }
+  .dl-main b { display: block; line-height: 1.15; }
+  .dl-main .stack { text-align: left; }
+  .alt {
+    font-size: 14px; color: var(--muted);
+  }
+  .alt a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+  .alt a:hover { border-bottom-color: var(--accent); }
+  .meta-line {
+    margin-top: 8px;
+    display: flex; flex-wrap: wrap; gap: 8px 18px; justify-content: center;
+    font-family: var(--mono); font-size: 12.5px; color: var(--faint);
+  }
+  .meta-line span { display: inline-flex; align-items: center; gap: 7px; }
+  .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); opacity: .8; }
+
+  /* ---------- section frame ---------- */
+  section { padding-block: clamp(40px, 7vw, 72px); }
+  .sec-head { margin-bottom: 28px; }
+  .sec-head h2 {
+    font-family: var(--display); font-weight: 700;
+    font-size: clamp(23px, 4vw, 32px); margin: 0; letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .sec-head p { margin: 8px 0 0; color: var(--muted); max-width: 60ch; }
+
+  /* ---------- download cards ---------- */
+  .dl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 620px) { .dl-grid { grid-template-columns: 1fr; } }
+  .dcard {
+    position: relative;
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, var(--card), var(--bg-2));
+    border-radius: 18px;
+    padding: 22px;
+    display: flex; flex-direction: column; gap: 14px;
+    min-width: 0;
+    transition: border-color .18s ease, transform .18s ease;
+  }
+  .dcard:hover { border-color: var(--line-2); transform: translateY(-2px); }
+  .dcard.rec { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 14px 40px -16px var(--glow); }
+  .rec-badge {
+    position: absolute; top: -11px; left: 22px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+    color: #0a0a14; background: var(--accent); padding: 3px 10px; border-radius: 999px; font-weight: 700;
+  }
+  .dcard h3 { font-family: var(--display); font-weight: 700; font-size: 20px; margin: 0; }
+  .dcard .chip-arch { font-size: 13px; color: var(--muted); }
+  .dcard .filerow {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    font-family: var(--mono); font-size: 12.5px; color: var(--faint);
+    border-top: 1px solid var(--line); padding-top: 13px; margin-top: auto;
+  }
+  .dcard .filerow .fname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .dbtn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+    text-decoration: none; font-weight: 600; font-size: 15px;
+    padding: 12px 16px; border-radius: 11px;
+    border: 1px solid var(--line-2); background: rgba(255,255,255,0.04); color: var(--fg);
+    transition: background .18s ease, border-color .18s ease;
+  }
+  .dbtn:hover { background: rgba(125,140,255,0.12); border-color: var(--accent); }
+  .dcard.rec .dbtn { background: linear-gradient(180deg,#8d9bff,#6a79f5); color: #0a0a14; border-color: transparent; }
+  .dcard.rec .dbtn:hover { filter: brightness(1.05); }
+  .dbtn svg { width: 17px; height: 17px; fill: currentColor; }
+
+  .firstrun {
+    margin-top: 18px;
+    border: 1px solid var(--line); border-radius: 14px;
+    background: var(--bg-2);
+    padding: 18px 20px;
+    color: var(--muted); font-size: 14.5px;
+  }
+  .firstrun b { color: var(--fg); }
+  .firstrun code {
+    font-family: var(--mono); font-size: 12.5px; color: var(--accent);
+    background: rgba(125,140,255,0.1); padding: 2px 7px; border-radius: 6px;
+  }
+
+  /* ---------- features ---------- */
+  .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  @media (max-width: 820px) { .feat-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px) { .feat-grid { grid-template-columns: 1fr; } }
+  .feat {
+    border: 1px solid var(--line); border-radius: 14px; background: var(--card);
+    padding: 18px; display: flex; flex-direction: column; gap: 9px; min-width: 0;
+  }
+  .feat .ic {
+    width: 34px; height: 34px; border-radius: 9px;
+    display: grid; place-items: center;
+    background: rgba(125,140,255,0.12); color: var(--accent);
+    border: 1px solid var(--line);
+  }
+  .feat .ic svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+  .feat h4 { margin: 2px 0 0; font-size: 15.5px; font-weight: 600; }
+  .feat p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+
+  /* ---------- compatibility ---------- */
+  .compat { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+  @media (max-width: 720px) { .compat { grid-template-columns: 1fr; } }
+  .crow {
+    border: 1px solid var(--line); border-radius: 14px; background: var(--card); padding: 18px; min-width: 0;
+  }
+  .crow .tag { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+  .crow .tag .pip { width: 9px; height: 9px; border-radius: 50%; }
+  .crow.ok .pip { background: var(--ok); } .crow.ok .tag { color: var(--ok); }
+  .crow.warn .pip { background: var(--warn); } .crow.warn .tag { color: var(--warn); }
+  .crow.bad .pip { background: var(--bad); } .crow.bad .tag { color: var(--bad); }
+  .crow p { margin: 0; color: var(--muted); font-size: 14px; }
+
+  /* ---------- footer ---------- */
+  footer {
+    border-top: 1px solid var(--line);
+    margin-top: 24px;
+    padding-block: 40px 48px;
+    color: var(--faint);
+    font-size: 13.5px;
+  }
+  .foot-in { display: flex; flex-wrap: wrap; gap: 22px 40px; justify-content: space-between; align-items: flex-start; }
+  .foot-brand b { font-family: var(--display); font-weight: 800; letter-spacing: .12em; color: var(--fg); font-size: 16px; }
+  .foot-brand p { margin: 8px 0 0; max-width: 42ch; }
+  .foot-brand a { color: var(--accent); text-decoration: none; }
+  .foot-links { display: flex; flex-direction: column; gap: 7px; }
+  .foot-links a { color: var(--muted); text-decoration: none; }
+  .foot-links a:hover { color: var(--fg); }
+  .foot-note { width: 100%; border-top: 1px solid var(--line); padding-top: 18px; margin-top: 4px; color: var(--faint); }
+  .foot-note .credits { color: var(--faint); }
+  .foot-note a { color: var(--muted); text-decoration: none; }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+</style>
+</head>
+<body>
+<div class="aura" aria-hidden="true"></div>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="brand" href="#top" aria-label="Umbra home">
+      <span class="mark" aria-hidden="true"></span>
+      <b>UMBRA</b>
+    </a>
+    <div class="bar-right">
+      <span class="ver-pill" id="ver-pill">v1.9.3</span>
+      <a class="gh" id="gh-top" href="https://github.com/coldvini/umbra" target="_blank" rel="noopener">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        <span>GitHub</span><span class="repo">coldvini/umbra</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <div class="wrap">
+
+    <section class="hero">
+      <span class="eyebrow">Windows → macOS</span>
+      <h1>Run Windows apps and games <span class="soft">on your Mac.</span></h1>
+      <p class="lede">Umbra is a dark, CrossOver-style launcher. Drop in any <code style="font-family:var(--mono);font-size:.85em">.exe</code>, install Steam, Epic or GOG in a click, and play — no Boot Camp, no virtual machine.</p>
+
+      <div class="cta">
+        <a class="dl-main" id="dl-main" href="https://github.com/coldvini/umbra/releases/download/v1.9.3/Umbra-1.9.3-arm64.dmg" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 19h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="stack"><b>Download for Mac</b><span class="sub" id="dl-main-sub">Apple Silicon · .dmg</span></span>
+        </a>
+        <div class="alt" id="dl-alt">On an Intel Mac? <a href="#download">Get the Intel build ↓</a></div>
+        <div class="meta-line">
+          <span><span class="dot"></span>Free</span>
+          <span><span class="dot"></span><span id="meta-ver">v1.9.3</span></span>
+          <span><span class="dot"></span>macOS 12+</span>
+          <span><span class="dot"></span>Updates itself</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="download">
+      <div class="sec-head">
+        <h2>Download</h2>
+        <p>Pick the build for your Mac. Not sure? Apple Silicon is anything from 2020 on (M1–M4); Intel is older.</p>
+      </div>
+      <div class="dl-grid">
+        <div class="dcard" id="card-arm">
+          <span class="rec-badge" id="rec-arm" hidden>Recommended for your Mac</span>
+          <h3>Apple Silicon</h3>
+          <div class="chip-arch">M1, M2, M3, M4 — Macs from 2020 onward</div>
+          <a class="dbtn" id="btn-arm" href="https://github.com/coldvini/umbra/releases/download/v1.9.3/Umbra-1.9.3-arm64.dmg" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 19h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Download .dmg
+          </a>
+          <div class="filerow"><span class="fname" id="fn-arm">Umbra-1.9.3-arm64.dmg</span><span id="sz-arm"></span></div>
+        </div>
+        <div class="dcard" id="card-x64">
+          <span class="rec-badge" id="rec-x64" hidden>Recommended for your Mac</span>
+          <h3>Intel</h3>
+          <div class="chip-arch">Intel-based Macs (pre-2020)</div>
+          <a class="dbtn" id="btn-x64" href="https://github.com/coldvini/umbra/releases/download/v1.9.3/Umbra-1.9.3-x64.dmg" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 19h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Download .dmg
+          </a>
+          <div class="filerow"><span class="fname" id="fn-x64">Umbra-1.9.3-x64.dmg</span><span id="sz-x64"></span></div>
+        </div>
+      </div>
+      <div class="firstrun">
+        <b>First launch:</b> Umbra isn't notarized by Apple, so macOS blocks it once. Drag it into <b>Applications</b>, open it, then go to <b>System Settings → Privacy &amp; Security → Open Anyway</b>. (Or run <code>xattr -cr /Applications/Umbra.app</code> in Terminal.) After that it updates itself — no need to come back here.
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h2>What you get</h2>
+        <p>A full Windows runtime on your Mac, set up for you on first launch.</p>
+      </div>
+      <div class="feat-grid" id="features"></div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h2>What runs</h2>
+        <p>Umbra runs Windows software through Wine. Most things work — here's the honest picture.</p>
+      </div>
+      <div class="compat">
+        <div class="crow ok"><div class="tag"><span class="pip"></span>Works well</div><p>Most DirectX 9–11 games, indie and older titles, launchers and everyday Windows utilities.</p></div>
+        <div class="crow warn"><div class="tag"><span class="pip"></span>Depends</div><p>DirectX 12 games need D3DMetal — install Whisky or Apple's Game Porting Toolkit, then pick its engine.</p></div>
+        <div class="crow bad"><div class="tag"><span class="pip"></span>Won't work</div><p>Games with kernel-level anti-cheat (Valorant and many competitive shooters).</p></div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <div class="wrap foot-in">
+    <div class="foot-brand">
+      <b>UMBRA</b>
+      <p>Made by Vini — <a href="https://github.com/coldvini" target="_blank" rel="noopener">@coldvini</a>. Free for personal use. Source-available; no reselling or reskinned clones.</p>
+    </div>
+    <div class="foot-links">
+      <a href="https://github.com/coldvini/umbra" target="_blank" rel="noopener">GitHub repository</a>
+      <a href="https://github.com/coldvini/umbra/releases" target="_blank" rel="noopener">All releases</a>
+      <a href="#download">Download</a>
+    </div>
+    <div class="foot-note">
+      <span class="credits">Built on Wine, DXVK, MoltenVK, Winetricks, Electron and Inter. Umbra © Vini.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var REPO = 'coldvini/umbra';
+    var FALLBACK = '1.9.3';
+
+    function dmg(v, arch) { return 'https://github.com/' + REPO + '/releases/download/v' + v + '/Umbra-' + v + '-' + arch + '.dmg'; }
+    function mb(bytes) { return bytes ? (bytes / 1048576).toFixed(0) + ' MB' : ''; }
+    function $(id) { return document.getElementById(id); }
+
+    // Render the page for a known version (works even if the live check is blocked).
+    function paint(v, assets) {
+      $('ver-pill').textContent = 'v' + v;
+      $('meta-ver').textContent = 'v' + v;
+      var arm = 'Umbra-' + v + '-arm64.dmg', x64 = 'Umbra-' + v + '-x64.dmg';
+      $('btn-arm').href = dmg(v, 'arm64'); $('fn-arm').textContent = arm;
+      $('btn-x64').href = dmg(v, 'x64');  $('fn-x64').textContent = x64;
+      if (assets) {
+        var a = assets.find(function (x) { return x.name === arm; });
+        var b = assets.find(function (x) { return x.name === x64; });
+        if (a) { $('btn-arm').href = a.browser_download_url; $('sz-arm').textContent = mb(a.size); }
+        if (b) { $('btn-x64').href = b.browser_download_url; $('sz-x64').textContent = mb(b.size); }
+      }
+      recommend();
+    }
+
+    // Point the big hero button at whichever build suits this Mac.
+    function recommend() {
+      var silicon = detectSilicon(); // true / false / null
+      var arch = silicon === false ? 'x64' : 'arm64';
+      var main = $('dl-main');
+      main.href = $(arch === 'x64' ? 'btn-x64' : 'btn-arm').href;
+      $('dl-main-sub').textContent = (arch === 'x64' ? 'Intel' : 'Apple Silicon') + ' · .dmg';
+      $(arch === 'x64' ? 'rec-x64' : 'rec-arm').hidden = false;
+      $(arch === 'x64' ? 'card-x64' : 'card-arm').classList.add('rec');
+      $('dl-alt').innerHTML = arch === 'x64'
+        ? 'On Apple Silicon? <a href="#download">Get the Apple Silicon build ↓</a>'
+        : 'On an Intel Mac? <a href="#download">Get the Intel build ↓</a>';
+    }
+
+    function detectSilicon() {
+      try {
+        var c = document.createElement('canvas');
+        var gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+        if (!gl) return null;
+        var ext = gl.getExtension('WEBGL_debug_renderer_info');
+        var r = ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)) : '';
+        if (/apple/i.test(r)) return true;
+        if (/intel|amd|radeon|nvidia|geforce/i.test(r)) return false;
+      } catch (e) {}
+      return null;
+    }
+
+    var FEATURES = [
+      ['bolt', 'One-click setup', 'First launch installs Steam, Windows essentials, .NET and game components for you.'],
+      ['game', 'Get Apps', 'Steam, Epic, GOG, Battle.net, EA and Ubisoft launchers in one click each.'],
+      ['drop', 'Drop any .exe', 'Drag a program onto the window, or open it from Finder. Installers add the app to your Library automatically.'],
+      ['gpu', 'Faster graphics', 'DXVK and D3DMetal translate DirectX to Metal, with an FPS counter and Retina mode per game.'],
+      ['box', 'Bottles', 'Isolated Windows 10/11/7/XP environments, each with its own C: drive — back one up as a single file.'],
+      ['refresh', 'Updates itself', 'New versions download in the background; one click restarts into the update.']
+    ];
+    var ICONS = {
+      bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/>',
+      game: '<rect x="2" y="7" width="20" height="10" rx="5"/><path d="M7 12h3M8.5 10.5v3"/><circle cx="16" cy="11" r="0.6"/><circle cx="18" cy="13" r="0.6"/>',
+      drop: '<path d="M12 3v10m0 0l-3.5-3.5M12 13l3.5-3.5"/><path d="M5 15v3a2 2 0 002 2h10a2 2 0 002-2v-3"/>',
+      gpu: '<rect x="4" y="5" width="16" height="14" rx="2"/><rect x="8" y="9" width="8" height="6" rx="1"/><path d="M8 5V3M16 5V3"/>',
+      box: '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>',
+      refresh: '<path d="M4 12a8 8 0 0113.7-5.7L20 8M20 3v5h-5"/><path d="M20 12a8 8 0 01-13.7 5.7L4 16M4 21v-5h5"/>'
+    };
+    function buildFeatures() {
+      $('features').innerHTML = FEATURES.map(function (f) {
+        return '<div class="feat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+          ICONS[f[0]] + '</svg></div><h4>' + f[1] + '</h4><p>' + f[2] + '</p></div>';
+      }).join('');
+    }
+
+    buildFeatures();
+    paint(FALLBACK, null);
+
+    // Keep it fresh: pull the real latest release (works on GitHub Pages; if the
+    // viewer's frame blocks the request, the page already shows the known build).
+    fetch('https://api.github.com/repos/' + REPO + '/releases/latest', { headers: { 'Accept': 'application/vnd.github+json' } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (rel) {
+        if (!rel || !rel.tag_name) return;
+        var v = String(rel.tag_name).replace(/^v/, '');
+        paint(v, rel.assets || null);
+      })
+      .catch(function () {});
+  })();
+</script>
+</body>
+</html>
